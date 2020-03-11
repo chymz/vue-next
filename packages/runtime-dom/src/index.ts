@@ -7,7 +7,8 @@ import {
   Renderer,
   HydrationRenderer,
   App,
-  RootHydrateFunction
+  RootHydrateFunction,
+  registeredCompileFunction
 } from '@vue/runtime-core'
 import { nodeOps } from './nodeOps'
 import { patchProp } from './patchProp'
@@ -59,7 +60,7 @@ export const createApp = ((...args) => {
     if (!container) return
     const component = app._component
     if (
-      __RUNTIME_COMPILE__ &&
+      registeredCompileFunction &&
       !isFunction(component) &&
       !component.render &&
       !component.template

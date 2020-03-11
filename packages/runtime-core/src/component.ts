@@ -417,11 +417,11 @@ type CompileFunction = (
   options?: CompilerOptions
 ) => RenderFunction
 
-let compile: CompileFunction | undefined
+export let registeredCompileFunction: CompileFunction | undefined
 
 // exported method uses any to avoid d.ts relying on the compiler types.
 export function registerRuntimeCompiler(_compile: any) {
-  compile = _compile
+  registeredCompileFunction = _compile
 }
 
 function finishComponentSetup(
@@ -437,9 +437,8 @@ function finishComponentSetup(
       instance.render = Component.render as RenderFunction
     }
   } else if (!instance.render) {
-    if (__RUNTIME_COMPILE__ && Component.template && !Component.render) {
-      // __RUNTIME_COMPILE__ ensures `compile` is provided
-      Component.render = compile!(Component.template, {
+    if (registeredCompileFunction && Component.template && !Component.render) {
+      Component.render = registeredCompileFunction(Component.template, {
         isCustomElement: instance.appContext.config.isCustomElement || NO
       })
       // mark the function as runtime compiled
@@ -448,7 +447,7 @@ function finishComponentSetup(
 
     if (__DEV__ && !Component.render) {
       /* istanbul ignore if */
-      if (!__RUNTIME_COMPILE__ && Component.template) {
+      if (!registeredCompileFunction && Component.template) {
         warn(
           `Component provides template but the build of Vue you are running ` +
             `does not support runtime template compilation. Either use the ` +
@@ -457,7 +456,7 @@ function finishComponentSetup(
       } else {
         warn(
           `Component is missing${
-            __RUNTIME_COMPILE__ ? ` template or` : ``
+            registeredCompileFunction ? ` template or` : ``
           } render function.`
         )
       }
@@ -468,7 +467,7 @@ function finishComponentSetup(
     // for runtime-compiled render functions using `with` blocks, the render
     // proxy used needs a different `has` handler which is more performant and
     // also only allows a whitelist of globals to fallthrough.
-    if (__RUNTIME_COMPILE__ && instance.render.isRuntimeCompiled) {
+    if (registeredCompileFunction && instance.render.isRuntimeCompiled) {
       instance.withProxy = new Proxy(
         instance,
         runtimeCompiledRenderProxyHandlers

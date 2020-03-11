@@ -76,7 +76,7 @@ const enum AccessTypes {
 export const PublicInstanceProxyHandlers: ProxyHandler<any> = {
   get(target: ComponentInternalInstance, key: string) {
     // fast path for unscopables when using `with` block
-    if (__RUNTIME_COMPILE__ && (key as any) === Symbol.unscopables) {
+    if ((key as any) === Symbol.unscopables) {
       return
     }
     const {
